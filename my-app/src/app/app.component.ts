@@ -17,6 +17,13 @@ export class AppComponent {
 
   createRandomNumbers(): number[] {
     // You implement this part
+    // big for loop
+    // start time
+    // ping google ( 8.8.8.8)
+    // end time
+    // calculate the difference
+    // how many decimals out should we go?
+    //apend to list
     return [1,2,65435,7];
   }
 
