@@ -34,6 +34,29 @@ export class AppComponent {
     }
 
     const end = performance.now();
+    const diff = end - start;
+    console.log(`Ping time: ${diff}ms`);
+    const numStr = diff.toString();
+    const numericDigits = numStr.replace(".", "").length;
+
+    //j for debugging
+    console.log("numStr: ", numStr);
+    console.log("numericDigits: ", numericDigits);
+
+
+    //return error if the number of digits is less than 5
+    if (numericDigits < 5) {
+        return "Error: Less than 5 digits";
+    }
+    //grab the final 2 digits
+    const lastTwoDigits = numStr.slice(-2);
+    //convert lastTwoDigits to a number
+    const lastTwoDigitsNum = parseInt(lastTwoDigits);
+    return lastTwoDigitsNum;
+
+
+
+
     return end - start;
         //maybe grab the last digit or smth
     //here we can also check for an error - in case that its like < 5 digits or something
