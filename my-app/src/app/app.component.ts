@@ -17,27 +17,43 @@ export class AppComponent {
     });
   }
 
-  async measurePing(url: string): Promise<number> {
+  async measurePing(url: string, timeout: number = 5000): Promise<number | string> {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeout);
     const start = performance.now();
+
     try {
-        await fetch(url, { method: "GET", mode: "no-cors" }); // `no-cors` avoids CORS errors
+        await fetch(url, { method: "GET", mode: "no-cors", signal: controller.signal });
     } catch (error) {
-        console.error("Ping failed:", error);
-        //TODO add something here to handle the error
-        //and retry
+        if ((error as Error).name === "AbortError") {
+            return "Timeout exceeded";
+        }
+        return `Error: ${(error as Error).message}`;
+    } finally {
+        clearTimeout(timeoutId);
     }
+
     const end = performance.now();
     return end - start;
-    //maybe grab the last digit or smth
+        //maybe grab the last digit or smth
     //here we can also check for an error - in case that its like < 5 digits or something
     //TODO figure out how to retry the whole function or whatever
 }
+
+
   async createRandomNumbers(): Promise<number[]> {
     // You implement this part
     let arrayToReturn: number[] = [];
     let numbers_added = 0;
-    for (let i = 0; i < 40; i++) {
-      arrayToReturn.push(await this.measurePing("https://www.google.com"));
+    while (numbers_added < 10) {
+      const pingResult = await this.measurePing("https://www.google.com");
+      if (typeof pingResult === 'number') {
+        numbers_added++;
+        arrayToReturn.push(pingResult);
+      }
+      else {
+        console.log(pingResult);
+      }
       
       // TODO add a check in case a given browser doesn't give good random numbers
       // start time
