@@ -98,4 +98,11 @@ export class AppComponent {
       alert('Failed to copy.');
     });
   }
+
+  get_timestamp(): void {
+    let time_one = new Date().toISOString();
+    console.log("time_one: ", time_one);
+    let time_two = Date.now();
+    console.log("time_two: ", time_two);
+  }
 }
