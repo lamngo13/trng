@@ -9,8 +9,9 @@ import { CommonModule } from '@angular/common';
   styleUrls: ['./app.component.css']
 })
 export class AppComponent {
-  tempRandomNumbers: number[] = [];
+  truRandomNumbers: number[] = [];
   randomNumbers: number[] = [];
+  fromcprng: number[] = [];
   
   @ViewChild('timestampButton') timestampButton!: ElementRef;
   
@@ -18,7 +19,20 @@ export class AppComponent {
   private prevY: number | null = null;
 
   generateNumbers(): void {
-    this.randomNumbers = [...this.tempRandomNumbers]; // Clone the array
+    this.randomNumbers = [...this.truRandomNumbers]; // Clone the array
+    console.log("cprng numbers: ", this.fromcprng);
+  }
+
+  expandRandom(): void {
+    console.log("Expanding random numbers...");
+    const randomValues = new Uint32Array(10);
+    crypto.getRandomValues(randomValues);
+    console.log("Random values: ", randomValues);
+    //write for loop to get the last digit of each number
+    //and push it to truRandomNumbers
+    for (let i = 0; i < randomValues.length; i++) {
+      this.fromcprng.push(randomValues[i] % 10);
+    }
   }
 
   copyToClipboard(): void {
@@ -31,13 +45,15 @@ export class AppComponent {
   }
 
   get_timestamp(event: MouseEvent | TouchEvent): void {
-    let time_one = new Date().toISOString();
-    console.log("time_one: ", time_one);
+    this.expandRandom(); // Call expandRandom to generate random values 
+    //hopefully seeded by time, but who knows !
 
+    //get timestamp!
+    let time_one = new Date().toISOString();
     // Extract last digit before 'Z'
     let lastDigit = parseInt(time_one[time_one.length - 2], 10);
     if (!isNaN(lastDigit)) {
-      this.tempRandomNumbers.push(lastDigit);
+      this.truRandomNumbers.push(lastDigit);
     }
 
     // Get mouse/touch position
@@ -52,8 +68,7 @@ export class AppComponent {
       let lastDigitX = diffX % 10;
       let lastDigitY = diffY % 10;
 
-      // Append to tempRandomNumbers
-      this.tempRandomNumbers.push(lastDigitX, lastDigitY);
+      this.truRandomNumbers.push(lastDigitX, lastDigitY);
     }
 
     // Update previous position
@@ -87,4 +102,5 @@ export class AppComponent {
     }
     return { clientX: 0, clientY: 0 };
   }
+  
 }
