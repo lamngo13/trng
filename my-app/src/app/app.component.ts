@@ -4,7 +4,7 @@ import { CommonModule } from '@angular/common';
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule], // Import CommonModule to use *ngIf and *ngFor
+  imports: [CommonModule],
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.css']
 })
