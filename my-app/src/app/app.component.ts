@@ -102,10 +102,6 @@ export class AppComponent {
   }
 
   async cryptographicMix(): Promise<number[]> {
-    //I want to sha256 hash the truRandomNumbers and fromcprng arrays together
-    //the reason is to expand the number of cs random numbers
-    //and expanding the entropy
-    //rn I'm thinking a ratio of 1:4?
     const mixedResults: number[] = [];
     const minLength = Math.min(this.truRandomNumbers.length, Math.floor(this.fromcprng.length / 4));
 
@@ -124,10 +120,13 @@ export class AppComponent {
         const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
         const hashArray = Array.from(new Uint8Array(hashBuffer));
 
-        // Convert hash output to single-digit numbers and append
-        // Limit output to 4 numbers per hash
-        mixedResults.push(...hashArray.slice(0, 4).map(num => num % 10));
+        // Take only the first 4 numbers from the hash to match the expected output size
+        const tempNumbers = hashArray.slice(0, 4).map(num => num % 10);
 
+        // Concatenate digits in pairs (e.g., [1, 6, 9, 0] → [16, 90])
+        for (let j = 0; j < tempNumbers.length - 1; j += 2) {
+            mixedResults.push(parseInt(`${tempNumbers[j]}${tempNumbers[j + 1]}`));
+        }
     }
 
     return mixedResults;
