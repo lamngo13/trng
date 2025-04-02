@@ -29,7 +29,6 @@ export class AppComponent {
     }).catch(error => {
       console.error('Error in cryptographicMix:', error);
     });
-    
   }
 
   expandRandom(): void {
@@ -37,7 +36,7 @@ export class AppComponent {
     const randomValues = new Uint32Array(10);
     crypto.getRandomValues(randomValues);
     console.log("Random values: ", randomValues);
-    // Extract last digit and push to fromcprng
+    
     for (let i = 0; i < randomValues.length; i++) {
       this.fromcprng.push(randomValues[i] % 10);
     }
@@ -53,31 +52,28 @@ export class AppComponent {
   }
 
   get_timestamp(event: MouseEvent | TouchEvent): void {
-    this.expandRandom(); // Generate random values 
-
-    // Get timestamp and extract last digit
+    this.expandRandom();
+    
     let time_one = new Date().toISOString();
     let lastDigit = parseInt(time_one[time_one.length - 2], 10);
     if (!isNaN(lastDigit)) {
       this.truRandomNumbers.push(lastDigit);
     }
 
-    // Get mouse/touch position
     const { clientX, clientY } = this.getEventCoordinates(event);
 
     if (this.prevX !== null && this.prevY !== null) {
       let diffX = Math.abs(clientX - this.prevX);
       let diffY = Math.abs(clientY - this.prevY);
-
+      
       let lastDigitX = diffX % 10;
       let lastDigitY = diffY % 10;
-
+      
       this.truRandomNumbers.push(lastDigitX, lastDigitY);
     }
-
+    
     this.prevX = clientX;
     this.prevY = clientY;
-
     this.moveButtonRandomly();
   }
 
@@ -106,13 +102,35 @@ export class AppComponent {
   }
 
   async cryptographicMix(): Promise<number[]> {
-    const combinedArray = [...this.truRandomNumbers, ...this.fromcprng];
-    const buffer = new Uint8Array(combinedArray);
+    //I want to sha256 hash the truRandomNumbers and fromcprng arrays together
+    //the reason is to expand the number of cs random numbers
+    //and expanding the entropy
+    //rn I'm thinking a ratio of 1:4?
+    const mixedResults: number[] = [];
+    const minLength = Math.min(this.truRandomNumbers.length, Math.floor(this.fromcprng.length / 4));
 
-    // Hash the combined array using SHA-256
-    const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    if (minLength === 0) {
+        return mixedResults; // Not enough numbers to process
+    }
 
-    return hashArray.map(num => num % 10); // Convert to single-digit numbers
-  }
+    for (let i = 0; i < minLength; i++) {
+        const truNumber = [this.truRandomNumbers[i]];
+        const cprngNumbers = this.fromcprng.slice(i * 4, (i + 1) * 4);
+
+        const combinedArray = [...truNumber, ...cprngNumbers];
+        const buffer = new Uint8Array(combinedArray);
+
+        // Hash the combined array using SHA-256
+        const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+
+        // Convert hash output to single-digit numbers and append
+        // Limit output to 4 numbers per hash
+        mixedResults.push(...hashArray.slice(0, 4).map(num => num % 10));
+
+    }
+
+    return mixedResults;
+}
+
 }

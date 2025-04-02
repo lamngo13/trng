@@ -1,0 +1,6 @@
+.tsbutton {
+    font-size: max(2vw, 2vh); /* Scale based on viewport size */
+    padding: max(1vw, 1vh) max(2vw, 2vh); /* Adjust padding proportionally */
+    width: max(10vw, 15vh); /* Ensure button width scales */
+    height: max(5vh, 8vw); /* Ensure button height scales */
+  }

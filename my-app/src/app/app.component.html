@@ -1,7 +1,7 @@
 <div>
   <p>Counter: {{ truRandomNumbers.length }}</p>
   <button (click)="generateNumbers()">Generate Random Numbers</button>
-  <button #timestampButton (click)="get_timestamp($event)">get_timestamp</button>
+  <button class="tsbutton" #timestampButton (click)="get_timestamp($event)">get_timestamp</button>
 </div>
 
 <div *ngIf="randomNumbers.length > 0">
