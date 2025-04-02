@@ -12,6 +12,7 @@ export class AppComponent {
   truRandomNumbers: number[] = [];
   randomNumbers: number[] = [];
   fromcprng: number[] = [];
+  holder: number[] = [];
   
   @ViewChild('timestampButton') timestampButton!: ElementRef;
   
@@ -19,8 +20,16 @@ export class AppComponent {
   private prevY: number | null = null;
 
   generateNumbers(): void {
-    this.randomNumbers = [...this.truRandomNumbers]; // Clone the array
-    console.log("cprng numbers: ", this.fromcprng);
+    console.log("fromcprng: ", this.fromcprng);
+    console.log("truRandomNumbers: ", this.truRandomNumbers);
+    this.cryptographicMix().then(result => {
+      this.holder = result;
+      this.randomNumbers = this.holder;
+      console.log("finalRandomNumbers: ", this.randomNumbers);
+    }).catch(error => {
+      console.error('Error in cryptographicMix:', error);
+    });
+    
   }
 
   expandRandom(): void {
@@ -28,8 +37,7 @@ export class AppComponent {
     const randomValues = new Uint32Array(10);
     crypto.getRandomValues(randomValues);
     console.log("Random values: ", randomValues);
-    //write for loop to get the last digit of each number
-    //and push it to truRandomNumbers
+    // Extract last digit and push to fromcprng
     for (let i = 0; i < randomValues.length; i++) {
       this.fromcprng.push(randomValues[i] % 10);
     }
@@ -45,12 +53,10 @@ export class AppComponent {
   }
 
   get_timestamp(event: MouseEvent | TouchEvent): void {
-    this.expandRandom(); // Call expandRandom to generate random values 
-    //hopefully seeded by time, but who knows !
+    this.expandRandom(); // Generate random values 
 
-    //get timestamp!
+    // Get timestamp and extract last digit
     let time_one = new Date().toISOString();
-    // Extract last digit before 'Z'
     let lastDigit = parseInt(time_one[time_one.length - 2], 10);
     if (!isNaN(lastDigit)) {
       this.truRandomNumbers.push(lastDigit);
@@ -60,22 +66,18 @@ export class AppComponent {
     const { clientX, clientY } = this.getEventCoordinates(event);
 
     if (this.prevX !== null && this.prevY !== null) {
-      // Compute absolute differences
       let diffX = Math.abs(clientX - this.prevX);
       let diffY = Math.abs(clientY - this.prevY);
 
-      // Extract last digit
       let lastDigitX = diffX % 10;
       let lastDigitY = diffY % 10;
 
       this.truRandomNumbers.push(lastDigitX, lastDigitY);
     }
 
-    // Update previous position
     this.prevX = clientX;
     this.prevY = clientY;
 
-    // Move button
     this.moveButtonRandomly();
   }
 
@@ -102,5 +104,15 @@ export class AppComponent {
     }
     return { clientX: 0, clientY: 0 };
   }
-  
+
+  async cryptographicMix(): Promise<number[]> {
+    const combinedArray = [...this.truRandomNumbers, ...this.fromcprng];
+    const buffer = new Uint8Array(combinedArray);
+
+    // Hash the combined array using SHA-256
+    const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+
+    return hashArray.map(num => num % 10); // Convert to single-digit numbers
+  }
 }
