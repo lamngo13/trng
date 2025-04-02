@@ -1,7 +1,5 @@
-import { Component } from '@angular/core';
+import { Component, ElementRef, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
-//import process from 'process';
-import hrtime from 'browser-process-hrtime'
 
 @Component({
   selector: 'app-root',
@@ -14,11 +12,11 @@ export class AppComponent {
   tempRandomNumbers: number[] = [];
   randomNumbers: number[] = [];
 
+  @ViewChild('timestampButton') timestampButton!: ElementRef;
+
   generateNumbers(): void {
-      this.randomNumbers = this.tempRandomNumbers;
+    this.randomNumbers = [...this.tempRandomNumbers]; // Clone the array
   }
-
-
 
   copyToClipboard(): void {
     const text = this.randomNumbers.join(', ');
@@ -31,13 +29,29 @@ export class AppComponent {
 
   get_timestamp(): void {
     let time_one = new Date().toISOString();
-    //time one example: time_one:  2025-04-02T15:55:57.056Z
     console.log("time_one: ", time_one);
-    // let time_two = Date.now();
-    // console.log("time_two: ", time_two);
-    // let time_three = performance.now();
-    // console.log("time_three: ", time_three);
-    // let time_four = hrtime();
-    // console.log("time_four: ", time_four);
+
+    // Extract last digit before 'Z'
+    let lastDigit = parseInt(time_one[time_one.length - 2], 10);
+    if (!isNaN(lastDigit)) {
+      this.tempRandomNumbers.push(lastDigit);
+    }
+
+    this.moveButtonRandomly();
+  }
+
+  moveButtonRandomly(): void {
+    if (this.timestampButton) {
+      const button = this.timestampButton.nativeElement;
+      const viewportWidth = window.innerWidth;
+      const viewportHeight = window.innerHeight;
+
+      const randomX = Math.max(10, Math.random() * (viewportWidth - 100)); // Keep within bounds
+      const randomY = Math.max(10, Math.random() * (viewportHeight - 50));
+
+      button.style.position = 'absolute';
+      button.style.left = `${randomX}px`;
+      button.style.top = `${randomY}px`;
+    }
   }
 }
