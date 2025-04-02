@@ -101,8 +101,13 @@ export class AppComponent {
 
   get_timestamp(): void {
     let time_one = new Date().toISOString();
+    //time one example: time_one:  2025-04-02T15:55:57.056Z
     console.log("time_one: ", time_one);
     let time_two = Date.now();
     console.log("time_two: ", time_two);
+    let time_three = performance.now();
+    console.log("time_three: ", time_three);
+    let time_four = process.hrtime();
+    console.log("time_four: ", time_four);
   }
 }
