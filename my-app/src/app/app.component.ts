@@ -1,5 +1,7 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
+//import process from 'process';
+import hrtime from 'browser-process-hrtime'
 
 @Component({
   selector: 'app-root',
@@ -103,11 +105,11 @@ export class AppComponent {
     let time_one = new Date().toISOString();
     //time one example: time_one:  2025-04-02T15:55:57.056Z
     console.log("time_one: ", time_one);
-    let time_two = Date.now();
-    console.log("time_two: ", time_two);
-    let time_three = performance.now();
-    console.log("time_three: ", time_three);
-    let time_four = process.hrtime();
-    console.log("time_four: ", time_four);
+    // let time_two = Date.now();
+    // console.log("time_two: ", time_two);
+    // let time_three = performance.now();
+    // console.log("time_three: ", time_three);
+    // let time_four = hrtime();
+    // console.log("time_four: ", time_four);
   }
 }
