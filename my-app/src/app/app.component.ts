@@ -9,9 +9,9 @@ import { CommonModule } from '@angular/common';
   styleUrls: ['./app.component.css']
 })
 export class AppComponent {
-  truRandomNumbers: number[] = [];
-  randomNumbers: number[] = [];
-  fromcprng: number[] = [];
+  truRandomNumbers: number[] = []; //REAL entropy from user interaction
+  randomNumbers: number[] = []; 
+  fromcprng: number[] = [];  //FAKE entropy from crypto.getRandomValues()
   holder: number[] = [];
   
   @ViewChild('timestampButton') timestampButton!: ElementRef;
@@ -19,10 +19,14 @@ export class AppComponent {
   private prevX: number | null = null;
   private prevY: number | null = null;
 
+  //final step - button pressed to show previously generated numbers
   generateNumbers(): void {
     console.log("fromcprng: ", this.fromcprng);
     console.log("truRandomNumbers: ", this.truRandomNumbers);
     this.cryptographicMix().then(result => {
+      //'interleave' the two arrays
+      //TODO is this the best way?
+      //do we need strictly true entropy for everything??
       this.holder = result;
       this.randomNumbers = this.holder;
       console.log("finalRandomNumbers: ", this.randomNumbers);
@@ -31,9 +35,73 @@ export class AppComponent {
     });
   }
 
+  //called everytime the 'get timestamp' button is pressed
+  //gets real entropy from user interaction
+  get_timestamp(event: MouseEvent | TouchEvent): void {
+    //everytime the user clicks the button, we appdend 3 truly random numbers to 
+    //the truRandomNumbers array
+    //1 from timestamp, 2 from the mouse coords
+    this.expandRandom();
+    //experimental method call 
+    //generates a small amount of numbers from a csprng
+    //TODO idk how crypto.getRandomValues() works, so need to check on that!
+    
+    let time_one = new Date().toISOString();
+    let lastDigit = parseInt(time_one[time_one.length - 2], 10);
+    if (!isNaN(lastDigit)) {
+      this.truRandomNumbers.push(lastDigit);
+      //THIS is real entropy!
+      //the source of user interaction is relatively trivial;
+      //the point is that if we measure like 9 decimals out from the timestamp,
+      //the last digit is big unpredictable
+    }
+
+    const { clientX, clientY } = this.getEventCoordinates(event);
+
+    if (this.prevX !== null && this.prevY !== null) {
+      let diffX = Math.abs(clientX - this.prevX);
+      let diffY = Math.abs(clientY - this.prevY);
+      
+      let lastDigitX = diffX % 10;
+      let lastDigitY = diffY % 10;
+      //similar concept as timestamp; the user will click the button
+      //and the EXACT point at which they click the button is unpredictable
+      //again measuring like 9 decimals out
+      
+      this.truRandomNumbers.push(lastDigitX, lastDigitY);
+    }
+    
+    this.prevX = clientX;
+    this.prevY = clientY;
+    this.moveButtonRandomly();
+    //move the button (NOT RANDOM lmao)
+    //but again, with this much precision, the user interaction
+    //lowkey doesn't matter
+  }
+
+  //function to call crypto.getRandomValues()
+  //this is a cryptographically secure pseudo-random number generator
+  //according to the internet - but who knows!
+  //THUS
+  //this is a 'fake' entropy source
+  //and my goal is to interleave this with the real entropy
+  //to increase the number of random numbers we can use
+  //bc I'm not tryna click that much - rip carpal tunnel lmao
+
   expandRandom(): void {
     console.log("Expanding random numbers...");
     const randomValues = new Uint32Array(10);
+    //since we generate 3 numbers from get_timestamp, and this has 10,
+    //we have a digit ratio of 
+    //3:10, real to fake entropy
+    //TODO is that enough??
+
+    //also I DO NOT CARE what the literature says,
+    //no way I am using real entropy to generate a seed and using that seed 
+    //because that is still deterministic
+    //again assume adversary has infinite time and resources
+    //!!!!
+
     crypto.getRandomValues(randomValues);
     console.log("Random values: ", randomValues);
     
@@ -51,33 +119,11 @@ export class AppComponent {
     });
   }
 
-  get_timestamp(event: MouseEvent | TouchEvent): void {
-    this.expandRandom();
-    
-    let time_one = new Date().toISOString();
-    let lastDigit = parseInt(time_one[time_one.length - 2], 10);
-    if (!isNaN(lastDigit)) {
-      this.truRandomNumbers.push(lastDigit);
-    }
 
-    const { clientX, clientY } = this.getEventCoordinates(event);
-
-    if (this.prevX !== null && this.prevY !== null) {
-      let diffX = Math.abs(clientX - this.prevX);
-      let diffY = Math.abs(clientY - this.prevY);
-      
-      let lastDigitX = diffX % 10;
-      let lastDigitY = diffY % 10;
-      
-      this.truRandomNumbers.push(lastDigitX, lastDigitY);
-    }
-    
-    this.prevX = clientX;
-    this.prevY = clientY;
-    this.moveButtonRandomly();
-  }
 
   moveButtonRandomly(): void {
+    // this is so meta, but its' not random, whatev
+    // user interaction doesn't matter because we measure with such precision
     if (this.timestampButton) {
       const button = this.timestampButton.nativeElement;
       const viewportWidth = window.innerWidth;
@@ -101,9 +147,21 @@ export class AppComponent {
     return { clientX: 0, clientY: 0 };
   }
 
+
+  //this is pure chatGPT
+  //it said that SHA-256 is a good hashing algorithm
+  //the purpose is to interleave real and fake entroyp arrays
+  //again with the point of reducing the amount of user interaction needed
+  //but is this safe ???????
+  //TODO check on that
+  //like assume pseudorandom numbers are known !??
   async cryptographicMix(): Promise<number[]> {
     const mixedResults: number[] = [];
     const minLength = Math.min(this.truRandomNumbers.length, Math.floor(this.fromcprng.length / 4));
+    //god I have no idea what this does
+    //but the tldr is do we trust that if all of psuedorandom numbers are known,
+    //the SHA-256 hash is still secure?
+    //the HASH function IS determinstic, so I am actually not sure still
 
     if (minLength === 0) {
         return mixedResults; // Not enough numbers to process
