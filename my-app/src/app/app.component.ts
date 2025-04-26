@@ -21,19 +21,46 @@ export class AppComponent {
 
   //final step - button pressed to show previously generated numbers
   generateNumbers(): void {
+    console.log("YUHHH YEET YUHHH")
     console.log("fromcprng: ", this.fromcprng);
     console.log("truRandomNumbers: ", this.truRandomNumbers);
-    this.cryptographicMix().then(result => {
-      //'interleave' the two arrays
-      //TODO is this the best way?
-      //do we need strictly true entropy for everything??
-      this.holder = result;
-      this.randomNumbers = this.holder;
-      console.log("finalRandomNumbers: ", this.randomNumbers);
-    }).catch(error => {
-      console.error('Error in cryptographicMix:', error);
-    });
+    const res = this.concatenatePairs(this.truRandomNumbers);
+    console.log("res: ", res);
+    //REAL TODO delete all console logs
+    //TODO combine truRandomNumbers into two-digit numbers
+    this.randomNumbers = res
+
+
+
+    // this.cryptographicMix().then(result => {
+    //   //'interleave' the two arrays
+    //   //TODO is this the best way?
+    //   //do we need strictly true entropy for everything??
+    //   this.holder = result;
+    //   this.randomNumbers = this.holder;
+    //   //TODO I think assigning randomNumbers is the trigger
+    //   console.log("finalRandomNumbers: ", this.randomNumbers);
+    // }).catch(error => {
+    //   console.error('Error in cryptographicMix:', error);
+    // });
   }
+
+  concatenatePairs(arr: number[]): number[] {
+    const result: number[] = [];
+    for (let i = 0; i < arr.length; i++) {
+        const current = arr[i];
+        const next = arr[i + 1];
+
+        // If current is a single digit (0-9) and next exists and is also a single digit
+        if (current < 10 && next !== undefined && next < 10) {
+            result.push(Number(`${current}${next}`));
+            i++; // skip the next one because it's already used
+        } else {
+            result.push(current);
+        }
+    }
+    return result;
+}
 
   //called everytime the 'get timestamp' button is pressed
   //gets real entropy from user interaction
@@ -41,12 +68,13 @@ export class AppComponent {
     //everytime the user clicks the button, we appdend 3 truly random numbers to 
     //the truRandomNumbers array
     //1 from timestamp, 2 from the mouse coords
-    this.expandRandom();
+    //this.expandRandom();
     //experimental method call 
     //generates a small amount of numbers from a csprng
     //TODO idk how crypto.getRandomValues() works, so need to check on that!
     
     let time_one = new Date().toISOString();
+    console.log("Timestamp: ", time_one);
     let lastDigit = parseInt(time_one[time_one.length - 2], 10);
     if (!isNaN(lastDigit)) {
       this.truRandomNumbers.push(lastDigit);
@@ -61,6 +89,8 @@ export class AppComponent {
     if (this.prevX !== null && this.prevY !== null) {
       let diffX = Math.abs(clientX - this.prevX);
       let diffY = Math.abs(clientY - this.prevY);
+      console.log("Diff X: ", diffX);
+      console.log("Diff Y: ", diffY);
       
       let lastDigitX = diffX % 10;
       let lastDigitY = diffY % 10;
@@ -69,6 +99,8 @@ export class AppComponent {
       //again measuring like 9 decimals out
       
       this.truRandomNumbers.push(lastDigitX, lastDigitY);
+      console.log("truRandomNumbers: ", this.truRandomNumbers);
+
     }
     
     this.prevX = clientX;
@@ -124,13 +156,23 @@ export class AppComponent {
   moveButtonRandomly(): void {
     // this is so meta, but its' not random, whatev
     // user interaction doesn't matter because we measure with such precision
+    const randomValues = new Uint32Array(10);
+    crypto.getRandomValues(randomValues);
+    console.log("Random values: ", randomValues);
+    const ranx  = (randomValues[0] % 10) / 10;
+    const rany  = (randomValues[1] % 10) / 10;
+    console.log("ranx: ", ranx);
+    console.log("rany: ", rany);
+
     if (this.timestampButton) {
       const button = this.timestampButton.nativeElement;
       const viewportWidth = window.innerWidth;
       const viewportHeight = window.innerHeight;
 
-      const randomX = Math.max(10, Math.random() * (viewportWidth - 100));
-      const randomY = Math.max(10, Math.random() * (viewportHeight - 50));
+      // const randomX = Math.max(10, Math.random() * (viewportWidth - 100));
+      // const randomY = Math.max(10, Math.random() * (viewportHeight - 50));
+      const randomX = Math.max(10, ranx * (viewportWidth - 150));
+      const randomY = Math.max(10, rany * (viewportHeight - 150));
 
       button.style.position = 'absolute';
       button.style.left = `${randomX}px`;
